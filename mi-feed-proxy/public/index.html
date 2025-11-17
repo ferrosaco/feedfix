@@ -207,6 +207,16 @@
 
 <script>
 // ============================
+// FUNCIÓN AUXILIAR "PAD" (ANTI-.padStart)
+// ============================
+// Esta es la función que reemplaza a .padStart() para iOS 9
+function pad(str, len, char) {
+    str = String(str);
+    var pad = char || '0';
+    return str.length >= len ? str : new Array(len - str.length + 1).join(pad) + str;
+}
+
+// ============================
 // CONFIGURACIÓN GLOBAL
 // ============================
 var NOMBRES_PARADAS = {};
@@ -236,16 +246,12 @@ function cargarDatosDelWrapper() {
             console.log("Datos recibidos:", data);
 
             // --- REPARTIR DATOS A LAS FUNCIONES DE PINTADO ---
-            // Comprobamos que los datos no sean 'null' (por si una API falló)
-
             if (data.paradas) {
                 procesarParadas(data.paradas); 
             } else {
                 console.warn("No se recibieron datos de Paradas.");
             }
 
-            // Damos un pequeño respiro para que NOMBRES_PARADAS se procese
-            // antes de intentar pintar las llegadas que dependen de ello.
             setTimeout(function() {
                 if (data.llegadas) {
                     pintarLlegadas(data.llegadas); 
@@ -253,7 +259,7 @@ function cargarDatosDelWrapper() {
                     console.warn("No se recibieron datos de Llegadas.");
                     document.getElementById("contenedor").innerHTML = '<p style="color:white;font-size:24px;">Error al cargar llegadas.</p>';
                 }
-            }, 100); // 100ms de retraso
+            }, 100); 
 
             if (data.horarios) {
                 pintarHorarios(data.horarios); 
@@ -276,17 +282,14 @@ function cargarDatosDelWrapper() {
         })
         .catch(function(err) {
             console.error("Falló la carga de datos del wrapper:", err);
-            // Mostrar error genérico si todo falla
             document.getElementById("contenedor").innerHTML = '<p style="color:white;font-size:24px;">No se pudo conectar con el servidor.</p>';
             document.getElementById("horarios").innerHTML = '';
-
         });
 }
 
 
 // ============================
 // FUNCIONES PARA "PROCESAR" Y "PINTAR"
-// (Estas eran las que estaban vacías)
 // ============================
 
 function procesarParadas(textoParadas) {
@@ -294,7 +297,7 @@ function procesarParadas(textoParadas) {
     try {
         var regex = /\{[^{}]*"id":[0-9]+,"nombre":"[^"]+"[^{}]*\}/g;
         var matches = textoParadas.match(regex);
-        NOMBRES_PARADAS = {}; // Limpiar caché anterior
+        NOMBRES_PARADAS = {}; 
         if (matches) {
             matches.forEach(function(s) {
                 var obj = JSON.parse(s);
@@ -310,7 +313,7 @@ function procesarParadas(textoParadas) {
 function pintarLlegadas(dataLlegadas) {
     console.log("Pintando llegadas...");
     var cont = document.getElementById("contenedor");
-    cont.innerHTML = ""; // Limpiar contenido anterior
+    cont.innerHTML = ""; 
 
     if (!dataLlegadas || !dataLlegadas.buses || !dataLlegadas.buses.lineas) {
         console.warn("Datos de llegadas incompletos o vacíos.");
@@ -373,7 +376,7 @@ function pintarLlegadas(dataLlegadas) {
             minutos.style.flexShrink = "0";
 
             var nombreParada = document.createElement("span");
-            var ultima = NOMBRES_PARADAS[bus.ult_parada]; // Usar el diccionario global
+            var ultima = NOMBRES_PARADAS[bus.ult_parada]; 
             if (ultima) {
                 nombreParada.textContent = "· " + ultima;
                 nombreParada.style.fontStyle = "italic";
@@ -398,7 +401,7 @@ function pintarLlegadas(dataLlegadas) {
 function pintarHorarios(dataHorarios) {
     console.log("Pintando horarios...");
     var cont = document.getElementById("horarios");
-    cont.innerHTML = ""; // Limpiar horarios anteriores
+    cont.innerHTML = ""; 
 
     var ahora = horaActualInt();
     
@@ -473,7 +476,7 @@ function pintarClima(dataClima) {
     var textoLluvia = '<span style="font-size: 40px; margin-right: 8px;">☀</span> Sin lluvias';
 
     if (!dataClima || !dataClima.hourly || !dataClima.hourly.time) {
-        bandaLluvia.innerHTML = textoLluvia; // Mostrar sol por defecto
+        bandaLluvia.innerHTML = textoLluvia; 
         return;
     }
     
@@ -498,7 +501,10 @@ function pintarClima(dataClima) {
                 textoLluvia = '<span style="font-size: 40px; margin-right: 8px;">⛆</span> Lluvia en ' + Math.ceil(diffHoras) + ' hora' + (Math.ceil(diffHoras) > 1 ? 's' : '');
             } 
             else if (lluviaHora.getDate() === ahora.getDate()) {
-                textoLluvia = '<span style="font-size: 40px; margin-right: 8px;">⛆</span> Lluvia a las ' + lluviaHora.getHours().toString().padStart(2,"0") + ':00';
+                // --- ¡AQUÍ ESTABA EL ERROR! ---
+                // Se reemplaza .padStart(2,"0") por la función pad()
+                var horaFormateada = pad(lluviaHora.getHours(), 2, '0');
+                textoLluvia = '<span style="font-size: 40px; margin-right: 8px;">⛆</span> Lluvia a las ' + horaFormateada + ':00';
             }
             else if (diffDias === 1 || (ahora.getHours() < 4 && lluviaHora.getDate() === ahora.getDate())) {
                 textoLluvia = '<span style="font-size: 40px; margin-right: 8px;">⛆</span> Lluvia mañana';
@@ -518,7 +524,7 @@ function pintarNoticias(dataNoticias) {
     var inner = document.getElementById("ticker-inner");
     if (!inner) return;
 
-    inner.innerHTML = ""; // Limpiar ticker
+    inner.innerHTML = ""; 
 
     var noticias = dataNoticias.items.slice(0, 10).map(function(item) {
         return item.title;
@@ -533,8 +539,8 @@ function pintarNoticias(dataNoticias) {
         });
     };
 
-    crearItems(); // Primera copia
-    crearItems(); // Segunda copia
+    crearItems(); 
+    crearItems(); 
 
     if (animacionActiva) {
         try { cancelAnimationFrame(animacionActiva); } catch(e) {}
@@ -543,16 +549,13 @@ function pintarNoticias(dataNoticias) {
     
     setTimeout(function() {
         iniciarTickerNoticias();
-    }, 200); // Esperar a que el DOM se pinte
+    }, 200); 
 }
 
 
 // ============================
 // FUNCIONES AUXILIARES
-// (Copiadas de tu script original)
 // ============================
-
-// --- Para Reloj y Modo Oscuro ---
 
 function actualizarReloj() {
     var ahora = new Date();
@@ -580,15 +583,11 @@ function aplicarModoClaroOscuro() {
     } else {
         document.body.style.background = "#764e50";
     }
-    // Estos colores eran iguales, los dejo como en tu original
     if (llegadaTitulo) llegadaTitulo.style.color = "#ffffff";
     if (horariosTitulo) horariosTitulo.style.color = "#ffffff";
 }
 
-// --- Para Horarios ---
-
 function pintarCajasHorario(lista, futuros, config) {
-    // Función de ayuda para no repetir código en 'pintarHorarios'
     if (futuros.length === 0) {
         var sinBuses = document.createElement("div");
         sinBuses.textContent = "Ya no quedan autobuses.";
@@ -609,7 +608,9 @@ function pintarCajasHorario(lista, futuros, config) {
 }
 
 function formatearHora(num) {
-    var s = String(num).padStart(4, "0");
+    // --- ¡AQUÍ ESTABA EL OTRO ERROR! ---
+    // Se reemplaza .padStart(4, "0") por la función pad()
+    var s = pad(num, 4, '0');
     return s.slice(0,2) + ":" + s.slice(2);
 }
 
@@ -622,17 +623,14 @@ function quitarAlpha(color) {
     return color.length === 9 ? color.slice(0, 7) : color;
 }
 
-// --- Para Ticker de Noticias ---
-
 function iniciarTickerNoticias() {
     var inner = document.getElementById("ticker-inner");
-    if (!inner) return; // Comprobación básica
+    if (!inner) return; 
 
-    var anchoMitad = 0; // Empezar en 0
+    var anchoMitad = 0; 
     var x = 0;
     var velocidad = 1.5;
 
-    // Polyfill para requestAnimationFrame para navegadores antiguos
     var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
               window.webkitRequestAnimationFrame || window.msRequestAnimationFrame ||
               function(cb) { return window.setTimeout(cb, 1000/60); };
@@ -641,37 +639,29 @@ function iniciarTickerNoticias() {
               function(id) { clearTimeout(id); };
     
     if (animacionActiva) {
-        caf(animacionActiva); // Cancelar animación anterior si existe
+        caf(animacionActiva); 
     }
 
     function animar() {
-        // --- INICIO DE LA SOLUCIÓN ---
-        // Si el ancho aún no se ha calculado, intentamos calcularlo.
-        // Esto espera a que el navegador haya "pintado" el contenido.
         if (anchoMitad === 0) {
             anchoMitad = inner.scrollWidth / 2;
-            
-            // Si sigue siendo 0, o si el contenido no es lo bastante ancho
-            // para necesitar scroll, detenemos la animación.
             if (anchoMitad === 0 || (inner.scrollWidth <= inner.clientWidth)) {
-                anchoMitad = 0; // resetear
-                return; // Detener el bucle de animación
+                anchoMitad = 0; 
+                return; 
             }
         }
-        // --- FIN DE LA SOLUCIÓN ---
 
         x -= velocidad;
         
         if (Math.abs(x) >= anchoMitad) {
-            x = 0; // Reiniciar el bucle
+            x = 0; 
         }
         
-        // Mantener el centrado vertical y mover horizontalmente
         inner.style.transform = "translateY(-50%) translateX(" + x + "px)";
         animacionActiva = raf(animar);
     }
 
-    animar(); // Empezar la animación
+    animar(); 
 }
 
 
@@ -679,18 +669,14 @@ function iniciarTickerNoticias() {
 // INICIALIZACIÓN Y REFRESCOS
 // ============================
 
-// --- Reloj y Modo Oscuro (se ejecutan siempre) ---
 setInterval(actualizarReloj, 1000);
 actualizarReloj();
 
 aplicarModoClaroOscuro();
 setInterval(aplicarModoClaroOscuro, 60000);
 
-// --- Carga de Datos (al cargar la página) ---
 document.addEventListener("DOMContentLoaded", function() {
     cargarDatosDelWrapper();
-    
-    // Refrescar los datos cada 60 segundos
     setInterval(cargarDatosDelWrapper, 60000); 
 });
 
