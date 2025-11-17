@@ -82,7 +82,6 @@
     .horarios-lista {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
       margin-top: 10px;
     }
 
@@ -97,6 +96,7 @@
       
 
       text-align: center;
+      margin: 5px;
     }
   </style>
 </head>
@@ -564,7 +564,13 @@ function actualizarReloj() {
         month: "long",
         day: "numeric"
     });
-    var hora = ahora.toLocaleTimeString("es-ES", { hour12: false });
+
+        // --- AÑADE ESTO PARA FORZAR EL FORMATO ---
+    var horas = pad(ahora.getHours(), 2, '0');
+    var minutos = pad(ahora.getMinutes(), 2, '0');
+    var segundos = pad(ahora.getSeconds(), 2, '0');
+    var hora = horas + ":" + minutos + ":" + segundos;
+    // --- FIN DEL ARREGLO ---
 
     var elem = document.getElementById("hora");
     if (elem) {
@@ -600,7 +606,7 @@ function pintarCajasHorario(lista, futuros, config) {
             var caja = document.createElement("div");
             caja.className = "horario-caja";
             caja.textContent = formatearHora(h);
-            caja.style.background = config.color;
+            caja.style.background = quitarAlpha(config.color);
             caja.style.color = "#ffffff";
             lista.appendChild(caja);
         });
@@ -658,6 +664,7 @@ function iniciarTickerNoticias() {
         }
         
         inner.style.transform = "translateY(-50%) translateX(" + x + "px)";
+        inner.style.webkitTransform = "translateY(-50%) translateX(" + x + "px)";
         animacionActiva = raf(animar);
     }
 
