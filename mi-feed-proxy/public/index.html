@@ -41,10 +41,28 @@
       overflow-y: auto;
       overflow-x: hidden;
       box-sizing: border-box;
+    /* TRUCO PARA IPAD VIEJO: */
+      /* Fuerza a la GPU a pintar esta capa, evitando que se quede en blanco */
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
     }
 
-    #col-llegadas { flex: 0 0 60%; }
-    #col-horarios { flex: 0 0 40%; }
+    /* LAYOUT 60:40 REFORZADO */
+    #col-llegadas {
+      /* Flexbox normal */
+      flex: 0 0 58%;
+      /* Redundancia necesaria para iOS 9: */
+      max-width: 58%; 
+      width: 58%; 
+    }
+
+    #col-horarios {
+      /* Flexbox normal */
+      flex: 0 0 42%;
+      /* Redundancia necesaria para iOS 9: */
+      max-width: 42%;
+      width: 42%;
+    }
 
     .titulo-col {
       font-size: 26px;
