@@ -257,21 +257,29 @@ function cargarDatosDelWrapper() {
     // Lógica Clave: Si es hora de dormir...
     // PERO solo activamos el bloqueo si YA tenemos los horarios de mañana cargados (!necesitoActualizarHorarios).
     // Si no los tenemos (ej: son las 00:05 y aún tenemos datos de ayer), dejamos pasar UNA petición para actualizarlos.
+    // Lógica Clave: Si es hora de dormir...
     if (esHoraDeDormir && !necesitoActualizarHorarios) {
         console.log("Modo sueño activo: Bloqueando llegadas, manteniendo horarios.");
         
-        // Bloqueamos SOLO la columna de llegadas
+        // 1. Bloqueamos la columna de llegadas y añadimos la FIRMA
         var cont = document.getElementById("contenedor");
         if (cont) {
             cont.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#ffffff;">
-                    <div style="font-size:60px;">😴😴😴😴😴😴😴</div>
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#ccc; opacity:0.5; padding: 20px;">
+                    <div style="font-size:60px;">😴😴😴😴😴😴😴😴😴</div>
                     <div style="font-size:24px; margin-top:10px;">¿Qué haces despierto todavía? Mejor vuelve a partir de las 6:00. A esta hora la tablet me toca a mí, y estoy minando criptomonedas.</div>
-                    <div style="font-size:24px; margin-top:10px; align-items:right; justify-content:right;">-- Burry</div>
+                    
+                    <div style="font-size:16px; margin-top:30px; width:100%; text-align:right; border-top:1px solid #666; padding-top:5px;">
+                        --Burry ❤️
+                    </div>
                 </div>`;
         }
-        
-        // OJO: NO borramos el div "horarios". Se queda con lo que pintamos en el paso 1.
+
+        // 2. ARREGLO DE LA LLUVIA: Quitamos el "Cargando..." y ponemos una luna
+        var bandaLluvia = document.getElementById("banda-lluvia");
+        if (bandaLluvia) {
+            bandaLluvia.innerHTML = '<span class="clima-emoji">🌙</span><span class="clima-texto">Buenas noches</span>';
+        }
         
         // Volvemos a comprobar en 1 minuto (sin gastar API)
         setTimeout(cargarDatosDelWrapper, 60000);
