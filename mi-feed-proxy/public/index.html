@@ -231,11 +231,8 @@ var CACHE_HORARIOS = null;
 function cargarDatosDelWrapper() {
     if (document.hidden) return;
 
-    // --- LÓGICA DE AHORRO DE BATERÍA/API ---
-    // Generamos una clave única para hoy (ej: "2023-10-27")
+    // 1. REVISAR CACHÉ DE HORARIOS
     var hoyKey = new Date().toLocaleDateString("es-ES");
-    
-    // Miramos si ya tenemos guardados los horarios de hoy
     var guardado = localStorage.getItem("mi_feed_horarios");
     var horariosLocales = null;
     var necesitoActualizarHorarios = true;
@@ -243,18 +240,44 @@ function cargarDatosDelWrapper() {
     if (guardado) {
         try {
             var objGuardado = JSON.parse(guardado);
-            // Si la fecha coincide, usamos los datos locales
             if (objGuardado.fecha === hoyKey && objGuardado.datos) {
                 necesitoActualizarHorarios = false;
                 horariosLocales = objGuardado.datos;
-                // Pintamos inmediatamente lo que tenemos guardado
+                // Pintamos los horarios locales (para que no desaparezcan por la noche)
                 CACHE_HORARIOS = horariosLocales;
                 pintarHorarios(horariosLocales);
             }
         } catch(e) { console.error("Error caché local", e); }
     }
 
-    // Si necesitamos horarios, pedimos 'completo', si no, solo 'vivo'
+    // 2. MODO SUEÑO (00:00 a 06:00)
+    var horaActual = new Date().getHours();
+    var esHoraDeDormir = (horaActual >= 14 && horaActual < 15);
+
+    // Lógica Clave: Si es hora de dormir...
+    // PERO solo activamos el bloqueo si YA tenemos los horarios de mañana cargados (!necesitoActualizarHorarios).
+    // Si no los tenemos (ej: son las 00:05 y aún tenemos datos de ayer), dejamos pasar UNA petición para actualizarlos.
+    if (esHoraDeDormir && !necesitoActualizarHorarios) {
+        console.log("Modo sueño activo: Bloqueando llegadas, manteniendo horarios.");
+        
+        // Bloqueamos SOLO la columna de llegadas
+        var cont = document.getElementById("contenedor");
+        if (cont) {
+            cont.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#ccc; opacity:0.5;">
+                    <div style="font-size:60px;">😴</div>
+                    <div style="font-size:24px; margin-top:10px;">¿Qué haces despierto todavía? Mejor vuelve a partir de las 6:00.</div>
+                </div>`;
+        }
+        
+        // OJO: NO borramos el div "horarios". Se queda con lo que pintamos en el paso 1.
+        
+        // Volvemos a comprobar en 1 minuto (sin gastar API)
+        setTimeout(cargarDatosDelWrapper, 60000);
+        return; 
+    }
+
+    // 3. PETICIÓN DE DATOS (Funcionamiento normal)
     var modo = necesitoActualizarHorarios ? 'completo' : 'vivo';
     console.log("Actualizando... Modo API: " + modo);
 
@@ -264,21 +287,23 @@ function cargarDatosDelWrapper() {
         .then(function(resp) { return resp.json(); })
         .then(function(data) {
             
-            // 1. Si la API nos dio horarios nuevos, los guardamos
+            // Guardamos horarios si son nuevos
             if (modo === 'completo' && data.horarios) {
                 var cacheData = { fecha: hoyKey, datos: data.horarios };
-                localStorage.setItem("mi_feed_horarios", JSON.stringify(cacheData));
+                try {
+                    localStorage.setItem("mi_feed_horarios", JSON.stringify(cacheData));
+                } catch(e) {}
                 CACHE_HORARIOS = data.horarios;
                 pintarHorarios(data.horarios);
             } else if (horariosLocales) {
-                // Si la API vino vacía de horarios (modo vivo), aseguramos usar los locales
+                // Si estamos en modo vivo, nos aseguramos de que la variable caché esté lista
                 CACHE_HORARIOS = horariosLocales;
             }
 
-            // 2. Procesamos paradas (ahora vienen limpias)
             if (data.paradas) procesarParadas(data.paradas);
             
-            // 3. Procesamos llegadas (siempre vienen)
+            // Solo pintamos llegadas si NO estamos en la transición al modo sueño
+            // (Aunque si llegamos aquí es porque no estamos durmiendo o estamos actualizando horarios)
             setTimeout(function() {
                 if (data.llegadas) pintarLlegadas(data.llegadas);
             }, 50);
