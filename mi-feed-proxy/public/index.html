@@ -8,7 +8,7 @@
   <style>
     body {
       font-family: "Segoe UI", Arial, sans-serif;
-      background: #764e50; /* Fondo rojo oscuro */
+      background: #764e50;
       color: #fff;
       margin: 0;
       padding: 0;
@@ -27,7 +27,7 @@
 
     #hora {
       font-size: 22px;
-      font-weight: normal; /* La base es normal, la negrita se pone por JS */
+      font-weight: normal;
     }
 
     .container {
@@ -41,22 +41,21 @@
       overflow-y: auto;
       overflow-x: hidden;
       box-sizing: border-box;
-      /* TRUCO PARA IPAD VIEJO: Fuerza GPU */
       -webkit-transform: translateZ(0);
       transform: translateZ(0);
     }
 
-    /* LAYOUT 60:40 REFORZADO */
+    /* LAYOUT 59:41 */
     #col-llegadas {
-      flex: 0 0 60%;
-      max-width: 60%; 
-      width: 60%; 
+      flex: 0 0 59%;
+      max-width: 59%; 
+      width: 59%; 
     }
 
     #col-horarios {
-      flex: 0 0 40%;
-      max-width: 40%;
-      width: 40%;
+      flex: 0 0 41%;
+      max-width: 41%;
+      width: 41%;
     }
 
     .titulo-col {
@@ -73,7 +72,6 @@
       margin-bottom: 20px;
     }
 
-    /* Cajitas de horarios */
     .horarios-lista {
       display: flex;
       flex-wrap: wrap;
@@ -121,7 +119,7 @@
     width: 100%;
     height: 50px;
     display: flex;
-    align-items: center;
+    align-items: center; /* Esto centra verticalmente todo */
     z-index: 10000;
     overflow: hidden;
     color: #fff;
@@ -134,9 +132,10 @@
     height: 100%;
     width: 280px;
     display: flex;
-    align-items: center;
+    align-items: center; /* Centrado vertical flex */
     justify-content: center;
     white-space: nowrap;
+    padding: 0 10px; /* Un poco de aire */
 }
 
 #banda-info-derecha {
@@ -152,6 +151,16 @@
 #cuenta-atras {
     font-weight: normal;
     font-size: 24px;
+}
+
+/* Clases para el clima */
+.clima-emoji {
+    font-size: 1.3em; /* 30% más grande que el texto, relativo */
+    margin-right: 10px;
+    line-height: 1; /* Evita que estire la altura */
+}
+.clima-texto {
+    /* Sin estilos raros, hereda la alineación flex */
 }
 </style>
 
@@ -233,7 +242,6 @@ function pintarLlegadas(dataLlegadas) {
         bloque.style.background = config.pastel; 
         bloque.style.color = "#000";
 
-        // Caja número gigante (VIVO)
         var lineaDiv = document.createElement("div");
         lineaDiv.textContent = config.nombre.replace("Línea ","");
         lineaDiv.style.width = "100px";
@@ -247,7 +255,6 @@ function pintarLlegadas(dataLlegadas) {
         lineaDiv.style.flexShrink = "0";
         bloque.appendChild(lineaDiv);
 
-        // Lista de buses
         var llegadasDiv = document.createElement("div");
         llegadasDiv.style.flexGrow = "1";
         llegadasDiv.style.padding = "8px 10px";
@@ -264,7 +271,6 @@ function pintarLlegadas(dataLlegadas) {
             elem.style.alignItems = "center";
             elem.style.minWidth = "0";
             
-            // Minutos
             var spanTiempo = document.createElement("span");
             spanTiempo.textContent = esEnParada ? "En la parada" : bus.tiempo + " min";
             spanTiempo.style.fontWeight = "bold";
@@ -274,7 +280,6 @@ function pintarLlegadas(dataLlegadas) {
             spanTiempo.style.flexShrink = "0";
             elem.appendChild(spanTiempo);
             
-            // Nombre Parada
             if (!esEnParada) {
                 var nombreParada = document.createElement("span");
                 var ultima = NOMBRES_PARADAS[bus.ult_parada]; 
@@ -346,16 +351,11 @@ function pintarClima(dataClima) {
     var bandaLluvia = document.getElementById("banda-lluvia");
     var ahora = new Date();
     
-    // === AJUSTE PARA IPAD VIEJO ===
-    // Aumentamos mucho el tamaño (46px) y lo bajamos a la fuerza (top: 8px)
-    // 'line-height: 1' evita que estire la barra negra
-    var estiloEmoji = 'font-size: 46px; margin-right: 12px; position: relative; top: 8px; line-height: 1; display: inline-block;';
-    var estiloTexto = 'vertical-align: middle; position: relative; top: 0px;'; // Texto normal
-
-    var sol = '<span style="' + estiloEmoji + '">☀️</span>';
-    var lluvia = '<span style="' + estiloEmoji + '">🌧️</span>';
+    // Usamos clases CSS limpias en lugar de estilos en línea complicados
+    var sol = '<span class="clima-emoji">☀️</span>';
+    var lluvia = '<span class="clima-emoji">🌧️</span>';
     
-    var htmlFinal = sol + '<span style="' + estiloTexto + '">Sin lluvias</span>';
+    var htmlFinal = sol + '<span class="clima-texto">Sin lluvias</span>';
 
     if (dataClima && dataClima.hourly) {
         var tiempos = dataClima.hourly.time;
@@ -374,7 +374,7 @@ function pintarClima(dataClima) {
                      mensaje = 'Lluvia a las ' + pad(fechaItem.getHours(),2) + ':00';
                 else mensaje = 'Lluvia mañana';
                 
-                htmlFinal = lluvia + '<span style="' + estiloTexto + '">' + mensaje + '</span>';
+                htmlFinal = lluvia + '<span class="clima-texto">' + mensaje + '</span>';
                 break;
             }
         }
@@ -389,7 +389,6 @@ function actualizarReloj() {
     
     var elem = document.getElementById("hora");
     if (elem) {
-        // === HORA EN NEGRITA ===
         elem.innerHTML = fecha + " — <b>" + hora + "</b>";
     }
 }
