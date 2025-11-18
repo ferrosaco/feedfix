@@ -215,7 +215,6 @@ var MAPA_HORARIOS = {
     301: "linea3A"
 };
 
-// AQUI definimos qué horario usar para cada línea
 var LINEA_INFO = {
     500: { nombre: "Línea 5",  vivo: "#6792bc", pastel: "#e1e9f2", sentido: "ida"    },
     300: { nombre: "Línea 3",  vivo: "#be8b00", pastel: "#f2e9cf", sentido: "vuelta" },
@@ -230,24 +229,56 @@ var CACHE_HORARIOS = null;
 // ============================
 
 function cargarDatosDelWrapper() {
-    if (document.hidden) {
-        console.log("Pantalla oculta: saltando actualización.");
-        return;
+    if (document.hidden) return;
+
+    // --- LÓGICA DE AHORRO DE BATERÍA/API ---
+    // Generamos una clave única para hoy (ej: "2023-10-27")
+    var hoyKey = new Date().toLocaleDateString("es-ES");
+    
+    // Miramos si ya tenemos guardados los horarios de hoy
+    var guardado = localStorage.getItem("mi_feed_horarios");
+    var horariosLocales = null;
+    var necesitoActualizarHorarios = true;
+
+    if (guardado) {
+        try {
+            var objGuardado = JSON.parse(guardado);
+            // Si la fecha coincide, usamos los datos locales
+            if (objGuardado.fecha === hoyKey && objGuardado.datos) {
+                necesitoActualizarHorarios = false;
+                horariosLocales = objGuardado.datos;
+                // Pintamos inmediatamente lo que tenemos guardado
+                CACHE_HORARIOS = horariosLocales;
+                pintarHorarios(horariosLocales);
+            }
+        } catch(e) { console.error("Error caché local", e); }
     }
 
-    console.log("Actualizando datos...");
+    // Si necesitamos horarios, pedimos 'completo', si no, solo 'vivo'
+    var modo = necesitoActualizarHorarios ? 'completo' : 'vivo';
+    console.log("Actualizando... Modo API: " + modo);
+
     proximaActualizacion = new Date().getTime() + 30000; 
     
-    fetch('/api/datos?t=' + new Date().getTime())
+    fetch('/api/datos?modo=' + modo + '&t=' + new Date().getTime())
         .then(function(resp) { return resp.json(); })
         .then(function(data) {
-            if (data.horarios) {
+            
+            // 1. Si la API nos dio horarios nuevos, los guardamos
+            if (modo === 'completo' && data.horarios) {
+                var cacheData = { fecha: hoyKey, datos: data.horarios };
+                localStorage.setItem("mi_feed_horarios", JSON.stringify(cacheData));
                 CACHE_HORARIOS = data.horarios;
-                pintarHorarios(data.horarios); 
+                pintarHorarios(data.horarios);
+            } else if (horariosLocales) {
+                // Si la API vino vacía de horarios (modo vivo), aseguramos usar los locales
+                CACHE_HORARIOS = horariosLocales;
             }
 
+            // 2. Procesamos paradas (ahora vienen limpias)
             if (data.paradas) procesarParadas(data.paradas);
             
+            // 3. Procesamos llegadas (siempre vienen)
             setTimeout(function() {
                 if (data.llegadas) pintarLlegadas(data.llegadas);
             }, 50);
@@ -267,11 +298,9 @@ function obtenerSiguienteSalidaHHMM(idLinea) {
     var servicios = datosLinea.servicios ? datosLinea.servicios[0] : null;
     if (!servicios) return null;
     
-    // 1. Miramos la configuración para saber si usar Ida o Vuelta
     var config = LINEA_INFO[idLinea];
     var sentido = (config && config.sentido) ? config.sentido : "ida";
 
-    // 2. Seleccionamos la lista correcta
     var listaHorarios = servicios[sentido];
     if (!listaHorarios) return null;
 
@@ -386,6 +415,8 @@ function pintarLlegadas(dataLlegadas) {
 function pintarHorarios(dataHorarios) {
     var cont = document.getElementById("horarios");
     cont.innerHTML = ""; 
+    if (!dataHorarios) return;
+
     var ahora = horaActualInt();
     
     function procesarLinea(datosLinea, config) {
@@ -393,7 +424,6 @@ function pintarHorarios(dataHorarios) {
         var servicios = datosLinea.servicios ? datosLinea.servicios[0] : null;
         if (!servicios) return;
 
-        // Usamos el mismo sentido que en la configuración
         var sentido = config.sentido || "ida";
         var horarios = servicios[sentido];
         
@@ -526,18 +556,28 @@ function horaActualInt() {
     return d.getHours() * 100 + d.getMinutes();
 }
 
-function procesarParadas(textoParadas) {
-    try {
-        var regex = /\{[^{}]*"id":[0-9]+,"nombre":"[^"]+"[^{}]*\}/g;
-        var matches = textoParadas.match(regex);
-        NOMBRES_PARADAS = {}; 
-        if (matches) {
-            matches.forEach(function(s) {
-                var obj = JSON.parse(s);
-                NOMBRES_PARADAS[obj.id] = obj.nombre;
-            });
-        }
-    } catch (e) {}
+// Esta función se ha simplificado porque ahora los datos vienen limpios
+function procesarParadas(listaParadas) {
+    NOMBRES_PARADAS = {}; 
+    
+    if (Array.isArray(listaParadas)) {
+        // Si viene como array (nueva versión)
+        listaParadas.forEach(function(p) {
+            NOMBRES_PARADAS[p.id] = p.nombre;
+        });
+    } else if (typeof listaParadas === 'string') {
+        // Retrocompatibilidad por si acaso
+        try {
+            var regex = /\{[^{}]*"id":[0-9]+,"nombre":"[^"]+"[^{}]*\}/g;
+            var matches = listaParadas.match(regex);
+            if (matches) {
+                matches.forEach(function(s) {
+                    var obj = JSON.parse(s);
+                    NOMBRES_PARADAS[obj.id] = obj.nombre;
+                });
+            }
+        } catch (e) {}
+    }
 }
 
 // ============================
