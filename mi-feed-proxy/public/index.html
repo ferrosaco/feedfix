@@ -8,8 +8,7 @@
   <style>
     body {
       font-family: "Segoe UI", Arial, sans-serif;
-      /* Fondo rojo oscuro fijo (recuperado) */
-      background: #764e50; 
+      background: #764e50; /* Fondo rojo oscuro */
       color: #fff;
       margin: 0;
       padding: 0;
@@ -18,8 +17,8 @@
 
     header {
       background: #E61C29;
-      padding: 20px 30px;
-      font-size: 35px;
+      padding: 15px 25px; /* Un poco más pequeño */
+      font-size: 32px;     /* Antes 35px */
       font-weight: bold;
       display: flex;
       justify-content: space-between;
@@ -27,18 +26,18 @@
     }
 
     #hora {
-      font-size: 23px;
+      font-size: 22px; /* Antes 23px */
       font-weight: normal;
     }
 
     .container {
       display: flex;
-      height: calc(100vh - 90px);
+      height: calc(100vh - 85px); /* Ajustado a la nueva cabecera */
     }
 
     .col {
       flex: 1;
-      padding: 20px;
+      padding: 15px; /* Menos padding */
       overflow-y: auto;
       overflow-x: hidden;
       box-sizing: border-box;
@@ -48,35 +47,34 @@
     #col-horarios { flex: 0 0 45%; }
 
     .titulo-col {
-      font-size: 30px;
-      margin-bottom: 15px;
+      font-size: 26px; /* Antes 30px */
+      margin-bottom: 12px;
       border-bottom: 2px solid #ffffff;
-      padding-bottom: 5px;
-      color: #fff; /* Títulos en blanco */
+      padding-bottom: 4px;
+      color: #fff;
     }
 
     .linea {
-      padding: 15px;
+      padding: 12px; /* Un poco más compacto */
       border-radius: 10px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
 
     /* Cajitas de horarios */
     .horarios-lista {
       display: flex;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .horario-caja {
-      /* Color definido por JS */
-      padding: 12px 16px;
+      padding: 10px 14px; /* Más pequeño */
       border-radius: 8px;
-      font-size: 22px;
-      min-width: 80px;
+      font-size: 20px;    /* Antes 22px */
+      min-width: 70px;    /* Antes 80px */
       text-align: center;
-      margin: 5px;
-      color: #000; /* Texto negro dentro de las cajitas pastel */
+      margin: 4px;
+      color: #000;
     }
   </style>
 </head>
@@ -108,20 +106,20 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 55px;
+    height: 50px; /* Un poco más fina (antes 55) */
     display: flex;
     align-items: center;
     z-index: 10000;
     overflow: hidden;
     color: #fff;
-    font-size: 28px;
+    font-size: 24px; /* Antes 28px */
 }
 
 #banda-lluvia {
     flex: 0 0 auto;
     background: #121212;
-    height: 55px;
-    width: 300px;
+    height: 100%;
+    width: 280px; /* Ajustado */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -130,18 +128,17 @@
 
 #banda-info-derecha {
   flex-grow: 1;
-  background: #E61C29; /* Fondo ROJO asegurado */
-  height: 55px;
+  background: #E61C29;
+  height: 100%;
   display: flex;
   align-items: center;
-  padding-left: 30px;
+  padding-left: 25px;
   justify-content: flex-start;
 }
 
 #cuenta-atras {
-    font-weight: normal; /* Letra fina */
-    font-size: 26px;
-    /* Eliminado text-transform: uppercase */
+    font-weight: normal;
+    font-size: 24px; /* Texto un poco más pequeño */
 }
 </style>
 
@@ -169,7 +166,6 @@ function pad(str, len, char) {
 // ============================
 var NOMBRES_PARADAS = {};
 
-// DEFINICIÓN DE COLORES: VIVO (Fuerte) y PASTEL (Claro)
 var LINEA_INFO = {
     500: { nombre: "Línea 5",  vivo: "#6792bc", pastel: "#e1e9f2" },
     300: { nombre: "Línea 3",  vivo: "#be8b00", pastel: "#f2e9cf" },
@@ -216,49 +212,71 @@ function pintarLlegadas(dataLlegadas) {
         bloque.style.marginBottom = "15px";
         bloque.style.borderRadius = "10px";
         bloque.style.overflow = "hidden";
-        // En llegadas, el fondo grande es el PASTEL
         bloque.style.background = config.pastel; 
-        bloque.style.color = "#000"; // Texto negro sobre pastel
+        bloque.style.color = "#000";
 
         // Caja número gigante (VIVO)
         var lineaDiv = document.createElement("div");
         lineaDiv.textContent = config.nombre.replace("Línea ","");
-        lineaDiv.style.width = "120px";
+        lineaDiv.style.width = "100px"; /* Más estrecho (antes 120) */
         lineaDiv.style.background = config.vivo; 
         lineaDiv.style.color = "#fff";
-        lineaDiv.style.fontSize = "60px";
+        lineaDiv.style.fontSize = "50px"; /* Más pequeño (antes 60) */
         lineaDiv.style.fontWeight = "bold";
         lineaDiv.style.display = "flex";
         lineaDiv.style.alignItems = "center";
         lineaDiv.style.justifyContent = "center";
+        lineaDiv.style.flexShrink = "0"; /* Importante para que no se aplaste */
         bloque.appendChild(lineaDiv);
 
         // Lista de buses
         var llegadasDiv = document.createElement("div");
         llegadasDiv.style.flexGrow = "1";
-        llegadasDiv.style.padding = "10px";
+        llegadasDiv.style.padding = "8px 10px"; /* Ajustado */
         llegadasDiv.style.display = "flex";
         llegadasDiv.style.flexDirection = "column";
-        llegadasDiv.style.gap = "8px";
+        llegadasDiv.style.gap = "6px";
+        llegadasDiv.style.minWidth = "0"; /* CRUCIAL para truncar flex items */
 
         linea.buses.forEach(function(bus) {
+            var esEnParada = (bus.tiempo === 0 || bus.tiempo === "0");
+            
             var elem = document.createElement("div");
             elem.style.display = "flex";
             elem.style.alignItems = "center";
-            // Hack espaciado iOS9
-            elem.innerHTML = '<span style="font-weight:bold; font-size:38px; margin-right:10px;">' + 
-                             ((bus.tiempo == 0) ? "En la parada" : bus.tiempo + " min") + 
-                             '</span>';
+            elem.style.minWidth = "0"; /* CRUCIAL para truncar hijos */
             
-            var nombreParada = document.createElement("span");
-            var ultima = NOMBRES_PARADAS[bus.ult_parada]; 
-            if (ultima) {
-                nombreParada.textContent = "· " + ultima;
-                nombreParada.style.fontStyle = "italic";
-                nombreParada.style.fontSize = "20px";
-                nombreParada.style.opacity = "0.8";
+            // Minutos
+            var spanTiempo = document.createElement("span");
+            spanTiempo.textContent = esEnParada ? "En la parada" : bus.tiempo + " min";
+            spanTiempo.style.fontWeight = "bold";
+            spanTiempo.style.fontSize = "32px"; /* Más pequeño (antes 38) */
+            spanTiempo.style.marginRight = "10px";
+            spanTiempo.style.whiteSpace = "nowrap";
+            spanTiempo.style.flexShrink = "0"; /* Los minutos no se encogen */
+            elem.appendChild(spanTiempo);
+            
+            // Nombre Parada (Solo si NO está en la parada)
+            if (!esEnParada) {
+                var nombreParada = document.createElement("span");
+                var ultima = NOMBRES_PARADAS[bus.ult_parada]; 
+                if (ultima) {
+                    nombreParada.textContent = "· " + ultima;
+                    nombreParada.style.fontStyle = "italic";
+                    nombreParada.style.fontSize = "18px"; /* Más pequeño (antes 20) */
+                    nombreParada.style.opacity = "0.8";
+                    
+                    // --- TRUNCADO ---
+                    nombreParada.style.whiteSpace = "nowrap";
+                    nombreParada.style.overflow = "hidden";
+                    nombreParada.style.textOverflow = "ellipsis";
+                    nombreParada.style.minWidth = "0"; 
+                    // ----------------
+                    
+                    elem.appendChild(nombreParada);
+                }
             }
-            elem.appendChild(nombreParada);
+
             llegadasDiv.appendChild(elem);
         });
 
@@ -279,32 +297,27 @@ function pintarHorarios(dataHorarios) {
         var horarios = servicios.ida || servicios.vuelta;
         if (!horarios) return;
 
-        var futuros = horarios.filter(function(h) { return h > ahora; }).slice(0, 6);
+        var futuros = horarios.filter(function(h) { return h > ahora; }).slice(0, 8);
 
         var div = document.createElement("div");
         div.className = "linea";
-        
-        // CAMBIO SOLICITADO: Caja contenedora = COLOR VIVO
         div.style.background = config.vivo; 
-        // Título en blanco para que se lea sobre el color vivo
-        div.innerHTML = "<h2 style='margin:0 0 10px; font-size:28px; font-weight:bold; color:#fff'>" 
+        // Título un poco más pequeño
+        div.innerHTML = "<h2 style='margin:0 0 8px; font-size:24px; font-weight:bold; color:#fff'>" 
                         + config.nombre + "</h2>";
         
         var lista = document.createElement("div");
         lista.className = "horarios-lista";
         
         if (futuros.length === 0) {
-            lista.innerHTML = "<div style='padding:10px; color:#fff'>Fin del servicio</div>";
+            lista.innerHTML = "<div style='padding:8px; color:#fff; font-size:18px;'>Fin del servicio</div>";
         } else {
             futuros.forEach(function(h) {
                 var caja = document.createElement("div");
                 caja.className = "horario-caja";
                 caja.textContent = formatearHora(h);
-                
-                // CAMBIO SOLICITADO: Cajitas pequeñitas = COLOR PASTEL
                 caja.style.background = config.pastel; 
-                caja.style.color = "#000"; // Texto negro sobre pastel
-                
+                caja.style.color = "#000"; 
                 lista.appendChild(caja);
             });
         }
@@ -320,7 +333,7 @@ function pintarHorarios(dataHorarios) {
 function pintarClima(dataClima) {
     var bandaLluvia = document.getElementById("banda-lluvia");
     var ahora = new Date();
-    var textoLluvia = '<span style="font-size: 40px; margin-right: 8px;">☀️</span> Sin lluvias';
+    var textoLluvia = '<span style="font-size: 32px; margin-right: 8px;">☀️</span> Sin lluvias';
 
     if (dataClima && dataClima.hourly) {
         var tiempos = dataClima.hourly.time;
@@ -338,8 +351,8 @@ function pintarClima(dataClima) {
                      textoLluvia = '☔ Lluvia a las ' + pad(fechaItem.getHours(),2) + ':00';
                 else textoLluvia = '☔ Lluvia mañana';
                 
-                // Añadir icono
-                textoLluvia = textoLluvia.replace('☔', '<span style="font-size: 40px; margin-right: 8px;">☔</span>');
+                // Icono ajustado
+                textoLluvia = textoLluvia.replace('☔', '<span style="font-size: 32px; margin-right: 8px;">☔</span>');
                 break;
             }
         }
@@ -361,7 +374,6 @@ function actualizarCuentaAtras() {
     var ahora = new Date().getTime();
     var faltan = Math.ceil((proximaActualizacion - ahora) / 1000);
     if (faltan < 0) faltan = 0;
-    // Texto en minúsculas/mixtas
     div.textContent = "Próxima actualización en " + faltan + "s";
 }
 
